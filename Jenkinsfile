@@ -1,13 +1,12 @@
 pipeline {
     agent {
-        // Specify the label of your Jenkins agent that has Docker, Helm, and kubectl installed
-        label 'your-helm-agent-label' // Replace with the actual label of your Jenkins agent
+        label 'helm deployer' 
     }
 
     environment {
         // Replace with your Docker Hub username/organization
         DOCKER_REGISTRY = 'docker.io'
-        DOCKER_IMAGE_NAME = 'YOUR_DOCKER_REGISTRY_USERNAME/my-node-app' // e.g., mydockerusername/my-node-app
+        DOCKER_IMAGE_NAME = 'delaroth/my-kubernetes-app' // e.g., mydockerusername/my-node-app
         HELM_CHART_PATH = 'my-app-chart' // Path to your Helm chart relative to repo root
         KUBERNETES_NAMESPACE = 'default' // Or your specific Kubernetes namespace
         RELEASE_NAME = 'my-node-app' // Helm release name
