@@ -39,26 +39,30 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes with Helm') {
+        // ... (rest of your Jenkinsfile)
+
+stage('Deploy to Kubernetes with Helm') {
     steps {
         script {
-            // Bind the secret file to a temporary path, available as a variable
-            withCredentials([file(credentialsId: '	k3s-kubeconfig', variable: 'KUBECONFIG_FILE_PATH')]) {
-                echo "Deploying with Helm to Kubernetes namespace: ${KUBERNETES_NAMESPACE}"
+            withCredentials([file(credentialsId: 'kubeconfig-admin', variable: 'KUBECONFIG_FILE_PATH')]) {
+                // Now, use withEnv to expose KUBECONFIG_FILE_PATH as KUBECONFIG
+                withEnv(["KUBECONFIG=${KUBECONFIG_FILE_PATH}"]) { // <--- New withEnv block
+                    echo "Deploying with Helm to Kubernetes namespace: ${KUBERNETES_NAMESPACE}"
 
-                // Set the KUBECONFIG environment variable for the shell command
-                // helm will automatically pick this up.
-                sh """
-                    export KUBECONFIG=${KUBECONFIG_FILE_PATH}
-                    helm upgrade --install ${RELEASE_NAME} ${HELM_CHART_PATH} \\
-                        --namespace ${KUBERNETES_NAMESPACE} \\
-                        --set image.tag=${IMAGE_TAG}
-                """
-                echo "Helm deployment initiated. Check Kubernetes for rollout status."
+                    // No need for 'export KUBECONFIG' inside sh anymore
+                    sh """
+                        helm upgrade --install ${RELEASE_NAME} ${HELM_CHART_PATH} \\
+                            --namespace ${KUBERNETES_NAMESPACE} \\
+                            --set image.tag=${IMAGE_TAG}
+                    """
+                    echo "Helm deployment initiated. Check Kubernetes for rollout status."
+                } // <--- End of new withEnv block
             }
         }
     }
 }
+
+// ... (rest of your Jenkinsfile)
 
     }
 
