@@ -40,21 +40,26 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes with Helm') {
-            steps {
-                script {
-                    echo "Deploying with Helm to Kubernetes namespace: ${KUBERNETES_NAMESPACE}"
+    steps {
+        script {
+            // Bind the secret file to a temporary path, available as a variable
+            withCredentials([file(credentialsId: '	k3s-kubeconfig', variable: 'KUBECONFIG_FILE_PATH')]) {
+                echo "Deploying with Helm to Kubernetes namespace: ${KUBERNETES_NAMESPACE}"
 
-                    // Ensure Helm is installed and configured on the agent
-                    // Update the Helm chart's values.yaml with the new image tag
-                    // This is one way; you can also pass --set arguments to helm upgrade
-                    sh "helm upgrade --install ${RELEASE_NAME} ${HELM_CHART_PATH} " +
-                       "--namespace ${KUBERNETES_NAMESPACE} " +
-                       "--set image.tag=${IMAGE_TAG}"
-
-                    echo "Helm deployment initiated. Check Kubernetes for rollout status."
-                }
+                // Set the KUBECONFIG environment variable for the shell command
+                // helm will automatically pick this up.
+                sh """
+                    export KUBECONFIG=${KUBECONFIG_FILE_PATH}
+                    helm upgrade --install ${RELEASE_NAME} ${HELM_CHART_PATH} \\
+                        --namespace ${KUBERNETES_NAMESPACE} \\
+                        --set image.tag=${IMAGE_TAG}
+                """
+                echo "Helm deployment initiated. Check Kubernetes for rollout status."
             }
         }
+    }
+}
+
     }
 
     post {
