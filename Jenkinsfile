@@ -30,7 +30,7 @@ pipeline {
                 script {
                     // Use the Jenkins credential ID for your Docker Hub login
                     withCredentials([usernamePassword(credentialsId: 'DockerHub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        docker.withRegistry("${DOCKER_REGISTRY}", 'docker-hub-creds') {
+                        docker.withRegistry("${DOCKER_REGISTRY}", 'DockerHub') {
                             echo "Pushing Docker image: ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}"
                             docker.image("${DOCKER_IMAGE_NAME}:${IMAGE_TAG}").push()
                         }
