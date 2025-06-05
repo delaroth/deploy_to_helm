@@ -9,7 +9,7 @@ pipeline {
         DOCKER_IMAGE_NAME = 'delaroth/my-kubernetes-app' // e.g., mydockerusername/my-node-app
         HELM_CHART_PATH = 'levis_nginx' // Path to your Helm chart relative to repo root
         KUBERNETES_NAMESPACE = 'default' // Or your specific Kubernetes namespace
-        RELEASE_NAME = 'levi_website' // Helm release name
+        RELEASE_NAME = 'levi-website' // Helm release name
     }
 
     stages {
