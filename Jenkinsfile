@@ -44,7 +44,7 @@ pipeline {
 stage('Deploy to Kubernetes with Helm') {
     steps {
         script {
-            withCredentials([file(credentialsId: 'kubeconfig-admin', variable: 'KUBECONFIG_FILE_PATH')]) {
+            withCredentials([file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_FILE_PATH')]) {
                 // Now, use withEnv to expose KUBECONFIG_FILE_PATH as KUBECONFIG
                 withEnv(["KUBECONFIG=${KUBECONFIG_FILE_PATH}"]) { // <--- New withEnv block
                     echo "Deploying with Helm to Kubernetes namespace: ${KUBERNETES_NAMESPACE}"
