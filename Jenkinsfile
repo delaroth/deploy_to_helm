@@ -29,9 +29,16 @@ pipeline {
             withCredentials([usernamePassword(credentialsId: 'DockerHub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                 echo "Attempting Docker login and push within a single command block..."
                 sh """
-                    echo "${DOCKER_PASSWORD}" | docker login -u ${DOCKER_USERNAME} --password-stdin https://docker.io
+                    set -x # This will print each command before it's executed
+                    
+                    # Set DOCKER_TRACE as a separate environment variable for Docker client debugging
+                    export DOCKER_TRACE=1
+                    
+                    echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin https://docker.io
                     echo "Login completed. Attempting to push image..."
-                    DOCKER_TRACE=1 docker push ${DOCKER_USERNAME}/my-new-kubernetes-app:${IMAGE_TAG} // <-- CORRECTED LINE
+                    
+                    # Use the pre-defined DOCKER_IMAGE_NAME and IMAGE_TAG
+                    docker push "${DOCKER_IMAGE_NAME}:${IMAGE_TAG}" 
                 """
             }
         }
