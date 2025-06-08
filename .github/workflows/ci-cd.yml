@@ -62,47 +62,33 @@ jobs:
 
   # Job to deploy to Kubernetes using Helm
   deploy-to-kubernetes:
-    runs-on: ubuntu-latest # Specifies the runner environment
-    needs: build-and-push-docker # This job will only run after 'build-and-push-docker' completes successfully
+        runs-on: ubuntu-latest
+        needs: build-and-push-docker
+        permissions:
+          contents: read
 
-    # Permissions needed for Kubernetes interaction
-    permissions:
-      contents: read # Required for actions/checkout (if Helm chart is in repo)
-      # id-token: write # Only needed if you're using OIDC for Kubernetes authentication
+        steps:
+          - name: Checkout repository (for Helm chart)
+            uses: actions/checkout@v4
 
-    steps:
-      - name: Checkout repository (for Helm chart)
-        uses: actions/checkout@v4 # Clones your repository again to access Helm chart
+          - name: Setup Kubeconfig
+            run: |
+              echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > /tmp/kubeconfig
+              chmod 600 /tmp/kubeconfig
+              echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
 
-      - name: Setup Kubeconfig
-        run: |
-          # Decode the base64 Kubeconfig secret and write it to a temporary file
-          echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > /tmp/kubeconfig
-          # Set appropriate file permissions for security
-          chmod 600 /tmp/kubeconfig
-          # Set the KUBECONFIG environment variable for kubectl and helm to use
-          echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
+          - name: Install Helm
+            uses: azure/setup-helm@v4
+            with:
+              version: '3.15.0' # Or a specific Helm v3.x version
 
-      - name: Install Helm
-        uses: azure/setup-helm@v4 # Action to install Helm on the runner
-        with:
-          version: '3.15.0' # Use the latest Helm v3.x
-
-      - name: Deploy to Kubernetes with Helm
-        env:
-          # Access the IMAGE_TAG from the previous job's output
-          DEPLOY_IMAGE_TAG: ${{ needs.build-and-push-docker.outputs.image_tag }}
-        run: |
-          echo "Deploying with Helm to Kubernetes namespace: ${{ env.KUBERNETES_NAMESPACE }}"
-          helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
-            --namespace ${{ env.KUBERNETES_NAMESPACE }} \
-            --set image.repository=${{ env.DOCKER_IMAGE_NAME }} \
-            --set image.tag=${{ env.DEPLOY_IMAGE_TAG }}
-          echo "Helm deployment initiated. Check Kubernetes for rollout status."
-
-# Post-workflow actions (similar to Jenkins' post block)
-# These steps run after all jobs are complete
-# Note: GitHub Actions runners are ephemeral, so a 'cleanWs' is implicit.
-# We can add steps to indicate success/failure based on job outcomes.
-# The default behavior is that if any job fails, the workflow is marked as failure.
-# Success/failure echo can be added as steps within the deploy job or a separate notification job.
+          - name: Deploy to Kubernetes with Helm
+            env:
+              DEPLOY_IMAGE_TAG: ${{ needs.build-and-push-docker.outputs.image_tag }}
+            run: |
+              echo "Deploying with Helm to Kubernetes namespace: ${{ env.KUBERNETES_NAMESPACE }}"
+              helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
+                --namespace ${{ env.KUBERNETES_NAMESPACE }} \
+                --set image.repository=${{ env.DOCKER_IMAGE_NAME }} \
+                --set image.tag=${{ env.DEPLOY_IMAGE_TAG }}
+              echo "Helm deployment initiated. Check Kubernetes for rollout status."
