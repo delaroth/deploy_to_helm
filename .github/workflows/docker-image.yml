@@ -1,0 +1,108 @@
+name: CI/CD Pipeline to Kubernetes
+
+# This workflow runs on pushes to the main branch
+on:
+  push:
+    branches:
+      - main # Adjust this to your main branch name if it's different (e.g., master)
+
+# Define common environment variables for all jobs
+env:
+  DOCKER_REGISTRY: https://docker.io
+  DOCKER_IMAGE_NAME: delaroth/my-new-kubernetes-app
+  HELM_CHART_PATH: levis-nginx
+  KUBERNETES_NAMESPACE: levi
+  RELEASE_NAME: levi-website
+
+jobs:
+  # Job to build and push the Docker image
+  build-and-push-docker:
+    runs-on: ubuntu-latest # Specifies the runner environment
+
+    # Outputs from this job that subsequent jobs might need
+    outputs:
+      image_tag: ${{ steps.set_image_tag.outputs.image_tag }}
+
+    # Permissions needed for the actions used in this job
+    permissions:
+      contents: read # Required for actions/checkout
+      # packages: write # Only needed if you push to GitHub Container Registry, good practice to include
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Clones your repository to the runner
+
+      - name: Set Image Tag
+        id: set_image_tag # Assign an ID to this step to reference its outputs
+        run: |
+          # Get the short Git commit hash
+          GIT_COMMIT_SHORT=$(git rev-parse --short HEAD)
+          # Combine GitHub's run number and short Git commit hash for the image tag
+          # This mimics your Jenkins tag format (e.g., 25-0406c7c)
+          IMAGE_TAG="${{ github.run_number }}-${GIT_COMMIT_SHORT}"
+          echo "Calculated IMAGE_TAG: $IMAGE_TAG"
+          # Make IMAGE_TAG available as an environment variable for subsequent steps in this job
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          # Make IMAGE_TAG available as an output of this job for subsequent jobs
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3 # Uses the official Docker login action
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }} # Accesses the GitHub secret
+          password: ${{ secrets.DOCKER_TOKEN }}   # Accesses the GitHub secret (your PAT)
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5 # Uses the official Docker build-push action
+        with:
+          context: . # Build context is the current directory (where your Dockerfile is)
+          push: true # Instructs the action to push the image to Docker Hub
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.IMAGE_TAG }} # Uses the calculated image name and tag
+          file: ./Dockerfile # Explicitly specifies the Dockerfile path
+
+  # Job to deploy to Kubernetes using Helm
+  deploy-to-kubernetes:
+    runs-on: ubuntu-latest # Specifies the runner environment
+    needs: build-and-push-docker # This job will only run after 'build-and-push-docker' completes successfully
+
+    # Permissions needed for Kubernetes interaction
+    permissions:
+      contents: read # Required for actions/checkout (if Helm chart is in repo)
+      # id-token: write # Only needed if you're using OIDC for Kubernetes authentication
+
+    steps:
+      - name: Checkout repository (for Helm chart)
+        uses: actions/checkout@v4 # Clones your repository again to access Helm chart
+
+      - name: Setup Kubeconfig
+        run: |
+          # Decode the base64 Kubeconfig secret and write it to a temporary file
+          echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > /tmp/kubeconfig
+          # Set appropriate file permissions for security
+          chmod 600 /tmp/kubeconfig
+          # Set the KUBECONFIG environment variable for kubectl and helm to use
+          echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4 # Action to install Helm on the runner
+        with:
+          version: '3.x' # Use the latest Helm v3.x
+
+      - name: Deploy to Kubernetes with Helm
+        env:
+          # Access the IMAGE_TAG from the previous job's output
+          DEPLOY_IMAGE_TAG: ${{ needs.build-and-push-docker.outputs.image_tag }}
+        run: |
+          echo "Deploying with Helm to Kubernetes namespace: ${{ env.KUBERNETES_NAMESPACE }}"
+          helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
+            --namespace ${{ env.KUBERNETES_NAMESPACE }} \
+            --set image.repository=${{ env.DOCKER_IMAGE_NAME }} \
+            --set image.tag=${{ env.DEPLOY_IMAGE_TAG }}
+          echo "Helm deployment initiated. Check Kubernetes for rollout status."
+
+# Post-workflow actions (similar to Jenkins' post block)
+# These steps run after all jobs are complete
+# Note: GitHub Actions runners are ephemeral, so a 'cleanWs' is implicit.
+# We can add steps to indicate success/failure based on job outcomes.
+# The default behavior is that if any job fails, the workflow is marked as failure.
+# Success/failure echo can be added as steps within the deploy job or a separate notification job.
