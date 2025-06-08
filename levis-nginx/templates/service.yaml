@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "levis-nginx" . }} # Or whatever name your chart generates
+  name: {{ include "levis-nginx.fullname" . }} # Or whatever name your chart generates
   labels:
     {{- include "levis-nginx.labels" . | nindent 4 }}
 spec:
