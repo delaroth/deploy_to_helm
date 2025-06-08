@@ -26,7 +26,7 @@ pipeline {
      stage('Push Docker Image') {
     steps {
         script {
-            withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+            withCredentials([usernamePassword(credentialsId: 'DockerHub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                 echo "Attempting Docker login and push within a single command block..."
                 sh """
                     echo "${DOCKER_PASSWORD}" | docker login -u ${DOCKER_USERNAME} --password-stdin https://docker.io
