@@ -28,7 +28,6 @@ pipeline {
                 script {
                     // Use the Jenkins credential ID for your Docker Hub login
                     withCredentials([usernamePassword(credentialsId: 'DockerHub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        
                             echo "Pushing Docker image: ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}"
                             docker.image("${DOCKER_IMAGE_NAME}:${IMAGE_TAG}").push()
                         
@@ -37,14 +36,13 @@ pipeline {
             }
         }
 
-        // ... (rest of your Jenkinsfile)
 
 stage('Deploy to Kubernetes with Helm') {
     steps {
         script {
             withCredentials([file(credentialsId: 'kube-config', variable: 'KUBECONFIG_FILE_PATH')]) {
                 // Now, use withEnv to expose KUBECONFIG_FILE_PATH as KUBECONFIG
-                withEnv(["KUBECONFIG=${KUBECONFIG_FILE_PATH}"]) { // <--- New withEnv block
+                withEnv(["KUBECONFIG=${KUBECONFIG_FILE_PATH}"]) { 
                     echo "Deploying with Helm to Kubernetes namespace: ${KUBERNETES_NAMESPACE}"
 
                     // No need for 'export KUBECONFIG' inside sh anymore
@@ -54,7 +52,7 @@ stage('Deploy to Kubernetes with Helm') {
                             --set image.tag=${IMAGE_TAG}
                     """
                     echo "Helm deployment initiated. Check Kubernetes for rollout status."
-                } // <--- End of new withEnv block
+                } 
             }
         }
     }
