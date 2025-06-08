@@ -50,7 +50,7 @@ jobs:
         uses: docker/login-action@v3 # Uses the official Docker login action
         with:
           username: ${{ secrets.DOCKER_USERNAME }} # Accesses the GitHub secret
-          password: ${{ secrets.DOCKER_TOKEN }}   # Accesses the GitHub secret (your PAT)
+          password: ${{ secrets.DOCKER_PASSWORD }}   # Accesses the GitHub secret (your PAT)
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5 # Uses the official Docker build-push action
