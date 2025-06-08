@@ -23,7 +23,7 @@ pipeline {
             }
         }
 
-     stage('Push Docker Image') {
+    stage('Push Docker Image') {
     steps {
         script {
             withCredentials([usernamePassword(credentialsId: 'DockerHub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
@@ -31,13 +31,12 @@ pipeline {
                 sh """
                     echo "${DOCKER_PASSWORD}" | docker login -u ${DOCKER_USERNAME} --password-stdin https://docker.io
                     echo "Login completed. Attempting to push image..."
-                    DOCKER_TRACE=1 docker push ${DOCKER_USERNAME}/my-new-kubernetes-app:${BUILD_NUMBER}-${GIT_COMMIT_SHORT}
+                    DOCKER_TRACE=1 docker push ${DOCKER_USERNAME}/my-new-kubernetes-app:${IMAGE_TAG} // <-- CORRECTED LINE
                 """
             }
         }
     }
 }
-
 stage('Deploy to Kubernetes with Helm') {
     steps {
         script {
@@ -59,7 +58,7 @@ stage('Deploy to Kubernetes with Helm') {
     }
 }
 
-// ... (rest of your Jenkinsfile)
+
 
     }
 
