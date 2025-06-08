@@ -24,21 +24,33 @@ pipeline {
         }
 
       stage('Push Docker Image') {
-                steps {
-                    script {
-                        withCredentials([usernamePassword(credentialsId: 'DockerHub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                            echo "Attempting Docker login within pipeline..."
-                            sh """
-                                echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin ${DOCKER_REGISTRY}
-                            """
-                            echo "Docker login attempt finished. Now pushing image..."
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'DockerHub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        echo "Attempting Docker login and push within a single command block..."
+                        
+                        // Combine login and push into one 'sh' block
+                        // Also add some diagnostic commands
+                        sh """
+                            # Diagnostic: Check Docker daemon info
+                            docker info
+                            docker version
                             
-                            // NEW: Use direct 'docker push' command
-                            sh "docker push ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}"
-                        }
+                            # Explicitly log in
+                            echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin ${DOCKER_REGISTRY}
+                            
+                            # Verify login status (optional, but good for debugging)
+                            # This will attempt to read the config.json
+                            docker system df -v # Shows image usage and also forces interaction with credentials
+
+                            echo "Login completed. Attempting to push image..."
+                            docker push ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
+                        """
+                        echo "Docker push command finished."
                     }
                 }
             }
+        }
 
 stage('Deploy to Kubernetes with Helm') {
     steps {
