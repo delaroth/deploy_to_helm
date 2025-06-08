@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label 'helm deployer' 
-    }
+    agent any
 
     environment {
         // Replace with your Docker Hub username/organization
