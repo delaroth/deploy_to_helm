@@ -86,7 +86,7 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4 # Action to install Helm on the runner
         with:
-          version: '3.x' # Use the latest Helm v3.x
+          version: '3.15.0' # Use the latest Helm v3.x
 
       - name: Deploy to Kubernetes with Helm
         env:
