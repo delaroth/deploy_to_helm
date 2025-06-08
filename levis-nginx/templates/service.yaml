@@ -1,15 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "levis_nginx.fullname" . }}
+  name: {{ include "levis-nginx.fullname" . }} # Or whatever name your chart generates
   labels:
-    {{- include "levis_nginx.labels" . | nindent 4 }}
+    {{- include "levis-nginx.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
+  type: LoadBalancer # <--- CHANGE THIS LINE!
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: 80       # The port the Load Balancer will listen on externally (e.g., http://your-lb-ip:80)
+      targetPort: 80 # The port your Nginx container is listening on internally (default Nginx port)
       protocol: TCP
       name: http
   selector:
-    {{- include "levis_nginx.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "levis-nginx.name" . }} # Your deployment's app label
+    app.kubernetes.io/instance: {{ .Release.Name }} # Your deployment's instance label
