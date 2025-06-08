@@ -23,20 +23,18 @@ pipeline {
             }
         }
 
-       stage('Push Docker Image') {
+      stage('Push Docker Image') {
                 steps {
                     script {
                         withCredentials([usernamePassword(credentialsId: 'DockerHub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                             echo "Attempting Docker login within pipeline..."
-                            // Explicit Docker login using the credentials provided by Jenkins
-                            // Use --password-stdin to avoid exposing the password in logs
                             sh """
                                 echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin ${DOCKER_REGISTRY}
                             """
                             echo "Docker login attempt finished. Now pushing image..."
                             
-                            // Original push command, now that login is explicit
-                            docker.image("${DOCKER_IMAGE_NAME}:${IMAGE_TAG}").push()
+                            // NEW: Use direct 'docker push' command
+                            sh "docker push ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}"
                         }
                     }
                 }
