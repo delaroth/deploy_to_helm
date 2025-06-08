@@ -23,34 +23,20 @@ pipeline {
             }
         }
 
-      stage('Push Docker Image') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'DockerHub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        echo "Attempting Docker login and push within a single command block..."
-                        
-                        // Combine login and push into one 'sh' block
-                        // Also add some diagnostic commands
-                        sh """
-                            # Diagnostic: Check Docker daemon info
-                            docker info
-                            docker version
-                            
-                            # Explicitly log in
-                            echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin ${DOCKER_REGISTRY}
-                            
-                            # Verify login status (optional, but good for debugging)
-                            # This will attempt to read the config.json
-                            docker system df -v # Shows image usage and also forces interaction with credentials
-
-                            echo "Login completed. Attempting to push image..."
-                            docker push ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
-                        """
-                        echo "Docker push command finished."
-                    }
-                }
+     stage('Push Docker Image') {
+    steps {
+        script {
+            withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                echo "Attempting Docker login and push within a single command block..."
+                sh """
+                    echo "${DOCKER_PASSWORD}" | docker login -u ${DOCKER_USERNAME} --password-stdin https://docker.io
+                    echo "Login completed. Attempting to push image..."
+                    DOCKER_TRACE=1 docker push ${DOCKER_USERNAME}/my-new-kubernetes-app:${BUILD_NUMBER}-${GIT_COMMIT_SHORT}
+                """
             }
         }
+    }
+}
 
 stage('Deploy to Kubernetes with Helm') {
     steps {
