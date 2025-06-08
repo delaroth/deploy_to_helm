@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Replace with your Docker Hub username/organization
         DOCKER_REGISTRY = 'https://docker.io'
-        DOCKER_IMAGE_NAME = 'delaroth/my-kubernetes-app' // e.g., mydockerusername/my-node-app
+        DOCKER_IMAGE_NAME = 'delaroth/my-new-kubernetes-app' // e.g., mydockerusername/my-node-app
         HELM_CHART_PATH = 'levis-nginx' // Path to your Helm chart relative to repo root
         KUBERNETES_NAMESPACE = 'levi' // Or your specific Kubernetes namespace
         RELEASE_NAME = 'levi-website' // Helm release name
