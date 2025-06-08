@@ -8,7 +8,7 @@ pipeline {
         DOCKER_REGISTRY = 'https://docker.io'
         DOCKER_IMAGE_NAME = 'delaroth/my-kubernetes-app' // e.g., mydockerusername/my-node-app
         HELM_CHART_PATH = 'levis-nginx' // Path to your Helm chart relative to repo root
-        KUBERNETES_NAMESPACE = 'default' // Or your specific Kubernetes namespace
+        KUBERNETES_NAMESPACE = 'levi' // Or your specific Kubernetes namespace
         RELEASE_NAME = 'levi-website' // Helm release name
     }
 
@@ -44,7 +44,7 @@ pipeline {
 stage('Deploy to Kubernetes with Helm') {
     steps {
         script {
-            withCredentials([file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_FILE_PATH')]) {
+            withCredentials([file(credentialsId: 'kube-config', variable: 'KUBECONFIG_FILE_PATH')]) {
                 // Now, use withEnv to expose KUBECONFIG_FILE_PATH as KUBECONFIG
                 withEnv(["KUBECONFIG=${KUBECONFIG_FILE_PATH}"]) { // <--- New withEnv block
                     echo "Deploying with Helm to Kubernetes namespace: ${KUBERNETES_NAMESPACE}"
