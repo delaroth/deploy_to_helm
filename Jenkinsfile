@@ -14,9 +14,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def gitCommit = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                    // def gitCommit = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                     // Use a timestamp or Git commit hash as the tag
-                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${gitCommit}"
+                    env.IMAGE_TAG = "${env.BUILD_NUMBER}"
                     echo "Building Docker image: ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}"
                     docker.build("${DOCKER_IMAGE_NAME}:${IMAGE_TAG}", "-f Dockerfile .")
                 }
