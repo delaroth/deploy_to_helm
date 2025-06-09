@@ -77,7 +77,7 @@ ingress:
     # IMPORTANT: Configure your hosts. For initial testing, using a wildcard is easiest.
     # For a real domain, you'd replace "*" with your actual domain (e.g., "my-app.example.com").
     # Then you'd point your domain's CNAME record to the Ingress's external address.
-    - host: "*" # <--- Changed for initial testing
+    - host: "levi-dev-web.local" # <--- Changed for initial testing
       paths:
         - path: /
           pathType: Prefix # A common and flexible pathType
