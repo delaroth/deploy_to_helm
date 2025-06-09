@@ -58,7 +58,7 @@ service:
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  enabled: true
+  enabled: false
   # IMPORTANT: Set this to the class name of your Ingress Controller
   # You previously indicated "nginx", so I'll set it here.
   # Use "alb" for AWS Load Balancer Controller
